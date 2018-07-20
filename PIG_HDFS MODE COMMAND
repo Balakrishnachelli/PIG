@@ -1,0 +1,248 @@
+LOCAL HDFS MODE PIG EXECUTION
+-----------------------------------------------------------------------------------------------------------
+gopalkrishna@ubuntu:~$ pig 
+------------------------------------------------------------------------------------------------------------
+
+A = load '/pig/Weather_Forecast_Report_US.log' using PigStorage('|') as (id:chararray,name:chararray,forecast:chararray,rain:chararray,rate:int);
+B = filter A by rate>70;
+Dump B;
+
+A = load '/pig/Weather_Forecast_Report_US.log' using PigStorage('|') as (id:chararray,name:chararray,forecast:chararray,rain:chararray,rate:int);
+B = filter A by rate>70;
+C = Order B by id;
+Dump C;
+
+A = LOAD '/pig/empdata.log' using PigStorage('|') as (id:int, name:chararray, sal:int, area:chararray);
+B = FILTER A by sal>200000;
+STORE B INTO 'FILTER_90';
+
+A = LOAD '/pig/empdata.log' using PigStorage('|') as (id:int, name:chararray, sal:int, area:chararray);
+B = FILTER A by area== 'Pune' or area=='Hyderabad';
+C = order B by area ;
+Dump C;
+
+A = LOAD '/pig/empdata.log' using PigStorage('|') as (id:int, name:chararray, sal:int, area:chararray);
+B = FILTER A by area=='Pune' or area=='Hyderabad';
+C = order B by area ;
+D = limit C 5;
+Dump D;
+
+A = LOAD '/pig/empdata.log' using PigStorage('|') as (id:int, name:chararray, sal:int, area:chararray);
+B = FILTER A by area== 'Pune' or area=='Hyderabad';
+C = ORDER B by name;
+Store C into 'C_out'
+		
+A = LOAD '/pig/empdata.log' using PigStorage('|') as (id:int, name:chararray, sal:int, area:chararray);																																																																																																												
+SPLIT A INTO P IF area=='Pune',Q IF area=='Hyderabad',R if area=='Mumbai'; 
+STORE P INTO '/P1SPLIT';STORE Q INTO '/Q1SPLIT'; STORE R INTO '/R1SPLIT';
+
+UNION
+A = load '/pig/data1.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+B = load '/pig/data2.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+C = union A,B;
+Dump C;
+
+CROSS
+A = load '/pig/data1.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+B = load '/pig/data2.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+C = cross A,B;
+Dump C; / Store C into 'out007';
+ 
+JOIN 
+A = load '/pig/data1.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+B = load '/pig/data2.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+C = JOIN A by id ,B by id ;
+Dump C; / Store C into 'out007';
+
+LEFT OUTER JOIN
+A = load '/pig/data1.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+B = load '/pig/data2.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+C = JOIN A by id left outer,B by id ;
+Dump C; / Store C into 'out007';
+
+RIGHT OUTER JOIN
+A = load '/pig/data1.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+B = load '/pig/data2.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+C = JOIN A by id right,B by id ;
+Dump C; / Store C into 'out007';
+
+FULL OUTER JOIN
+A = load '/pig/data1.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+B = load '/pig/data2.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+C = JOIN A by id full outer,B by id ;
+Dump C; / Store C into 'out007';
+
+GROUP BY
+A = load 'empdata.log' using PigStorage('\t') as (id:int, name:chararray, sal:int, loc :chararray);
+B = Group A by loc;
+Dump B;
+
+GROUP BY / PARALLEL
+A = load '/pig/Weather_Forecast_Report_US.log' using PigStorage('|') as (id:chararray,name:chararray,forecast:chararray, rain:chararray,rate:int);
+B = Group A by forecast parallel 4;
+Dump B;
+
+COGROUP BY (Same as group by but can be used for multiple tables)
+A = load '/pig/student.log' using PigStorage(',') as (id:int, name:chararray, age:int, contact:long,loc:chararray);
+B = load '/pig/employee.log' using PigSgtorage(',') as (id:int, name:chararray,age:int,loc:chararray);
+C = COGROUP A by age, B by age;
+Dump C;
+
+TOKENIZE (Divide a string into an array)
+A = load '/pig/tokendata.log' using PigStorage('\n') as (line:chararray);
+B = foreach A generate TOKENIZE(line);
+dump B;
+
+FLATTEN 
+[FLATTEN  commands always read nested data only as i/p data.
+However flatten command is used for the unnesting of nested data.
+Flatten command will not directly read the variable which consist of the nested ouptut, Instead it will read the 
+variable of the base data on which nesting happened.]
+
+A = load '/pig/tokenData.log' using PigStorage('\n') as (line:chararray);
+B = foreach A generate FLATTEN(TOKENIZE(line));
+dump B;
+
+AGGREGATE FUNCTION
+
+A = load '/pig/Tsunamis_Deadlist_Information.log' using PigStorage('\t') as (date:chararray, country:chararray, number:int, loc:chararray);
+B = group A by loc;
+C = Foreach B generate group as G1, MIN(A.number),MAX(A.number),AVG(A.number);
+Dump C;
+
+A = load '/pig/empdata.log' using PigStorage('|') as (id:int, name:chararray,sal:int,loc:chararray);
+B = Group A all;
+C = foreach B generate group ,MAX(A.sal),MIN(A.sal);
+Dump C;
+
+A = load '/pig/empdata.log' using PigStorage('|') as (id:int, name:chararray,sal:int,loc:chararray);
+B = Group A by loc;
+C = foreach B generate group ,MAX(A.sal);
+Dump C;
+
+SCRIPT      [  pig -x local <scriptname.pig>  ]
+LOCATION:   /home/gopalkrishna/Desktop/pig/input/<filename.pig>
+
+1.aggmax.pig
+A = LOAD '/pig/empdata.log' using PigStorage('|') as (id:int, name:chararray, sal:int,loc:chararray);
+B = GROUP A by loc;
+C = FOREACH B GENERATE group AS loc, MAX(A.sal),MIN(A.sal);
+DUMP C;
+
+2.Parallel.pig
+A = LOAD '/pig/empdata.log' using PigStorage('|') as (id:int, name:chararray, sal:int ,loc:chararray);
+B = GROUP A by name parallel 3;
+STORE B INTO 'parallel_92';
+
+[3 reduce file will be generated but some of them will be empty.
+so to remove the empty file generation we will use the lazy file concept.
+shown in lazyparallel.pig]
+
+3. lazyparallel.pig
+
+In INSTALL/pig-0.15.0/conf/pig.properties  set 
+set.pig.output.lazy = true;
+
+A = LOAD '/pig/empdata.log' using PigStorage('|') as (id:int, name:chararray,sal:int ,loc:chararray);
+B = GROUP A by name parallel 8;
+STORE B INTO 'lazyparallel_93';
+
+4.datawithnull.pig
+
+A = LOAD '/pig/datawithnull.log' using PigStorage('\t') as (id:int, name:chararray, sal:int);
+B = FOREACH A GENERATE * AS completeRecord;
+C = FILTER B by completeRecord is not null;
+D = FILTER C by name is not null;
+store D into 'notnull_out002';
+
+5.Aggregate.pig 
+
+A = load '/pig/Weather_Forecast_Report_US.log' using PigStorage('|') as (name:chararray, area:chararray, forecast:chararray, rain:chararray, rate:int);
+B = Group A by forecast;
+C = foreach B generate group ,MAX(A.rate);
+Dump C;
+
+6.XML processing 
+
+A. xml001.pig
+REGISTER '/home/gopalkrishna/Desktop/pig/xml/piggybank.jar';
+A = load /pig/technology.xml' using org.apache.pig.piggybank.storage.XMLLoader('author') as (doc:chararray);
+B = order A by doc ;
+Dump B;
+
+B. xml002.pig
+
+REGISTER '/home/gopalkrishna/Desktop/pig/xml/piggybank.jar';
+A = load '/home/gopalkrishna/Desktop/pig/xml/technology.xml' using org.apache.pig.piggybank.storage.XMLLoader('author') as (doc:chararray);
+B = order A BY doc;
+Dump B;
+
+C. s5.pig
+
+REGISTER '/home/gopalkrishna/Desktop/pig/xml/piggybank.jar';
+A = load '/home/gopalkrishna/Desktop/pig/xml/technology.xml' using org.apache.pig.piggybank.storage.XMLLoader('name') as (doc:chararray);
+B = order A by doc asc;
+Dump B;
+
+
+7. JSon processing in pig 
+
+A = LOAD 'data.json' using JsonLoader('food:chararray, person:chararray,amount:int');
+B = Foreach A generate food,person,amount;
+C = order B by food;
+Dump C;  
+
+
+8. Parameter Passing 1
+
+create a file p1.log
+para1.pig
+A = load '<HDFS filename Path>' as (number:int);
+B = filter A by number == $pass ;
+Dump B;
+
+Running the file : pig -param pass=10 para1.pig
+
+
+9. Parameter Passing 2  [This method has worked only in hdfs asl LI]
+
+create a file empdata.log
+para3.pig
+A = load '$inputpath' using PigStorage('\n') as ($schemaformat);
+B = group A by ($group) ;
+Store B into 'out_024';
+
+param.properties
+inputpath = /pig/empdata.log
+schemaformat= id:int, name:chararray, sal:int, loc:chararray
+group= loc 
+
+Running the file : pig -param_file param.properties para3.pig
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
